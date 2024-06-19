@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:web_sync_lyrix/base_bloc.dart';
+import 'package:web_sync_lyrix/passage.dart';
 import 'package:web_sync_lyrix/print.dart';
 
-class BaseBloc {
+class Lyric extends BaseBloc {
   final textLrcCtrl = TextEditingController();
+  final resLrcCtrl = TextEditingController();
   final textOriginalCtrl = TextEditingController();
-  List<String> listLrcText = []; //each row//listOriginalText,
+  List<String> listLrcText = [], listTime = []; //each row//listOriginalText,
   List<List<String>> listLrcWord = [], listSentenceNoTime = [];
-  List<String> result = [],
-      listTime = []; //là những câu có đầy đủ dấu (original)
-
+  List<String> result = []; //là những câu có đầy đủ dấu (original)
+  final passage = Passage();
   splitLrcText() {
+    // passage.splitOriToPassage(textLrcCtrl.text);//'List<String>' is not a subtype of type 'String'
     listLrcText = textLrcCtrl.text.split('\n');
     for (int i = 0; i < listLrcText.length; ++i) {
       String sentence = listLrcText[i].trim();
@@ -23,20 +26,26 @@ class BaseBloc {
         listSentenceNoTime.add([]); //sentence empty cx phải add để hồi xử lý
       } else {
         //split ra từng từ
+        String str = sentence;
+        str.replaceFirst(' ', ';;');
+        p('str replace', str);
+        List list = str.split(';;');
+        listNoTime.add(list[1]); //passage
+////////////////////////////////////////////
         listLrcWord.add([]); //
         listLrcWord.last = sentence.split(' '); //[0]=time
         listSentenceNoTime
             .add(listLrcWord.last.sublist(1)); //list con băt đầu từ 1
         listTime.add(listLrcWord.last[0]);
+        listTimeOfPassage = List.from(listTime);
         p('listSentenceNoTime',
             listSentenceNoTime); //["Curiouser, and, curiouser!"]
       }
     }
   }
 
-  String resStr = '';
   matchTimeWithSentence() {
-    resStr = ''; //reset
+    String resStr = ''; //reset
     int lenListTime = listTime.length;
     int lenListSentence = result.length;
     if (lenListSentence == lenListSentence) {
@@ -44,6 +53,7 @@ class BaseBloc {
       for (int i = 0; i < lenListTime; ++i) {
         resStr += '${listTime[i]} ${result[i]}\n';
       }
+      resLrcCtrl.text = resStr;
       p('resStr', resStr);
     } else {
       p('NO EQUAL, time:$lenListTime,res', lenListSentence);
@@ -71,57 +81,58 @@ class BaseBloc {
       //each sentence
       List<String> sentence = listSentenceNoTime[i];
       if (sentence.isNotEmpty) {
-        if (sentence.length > 2) {
-          //min=3
-          String pairWordLast =
-              '${sentence[sentence.length - 2]} ${sentence.last}'; //cặp từ cuối câu
-          p('pairWordLast', pairWordLast); //t
-          var findLast = original.indexOf(pairWordLast);
-          p('findLast', findLast); //t
-          if (findLast > -1) {
-            int end = findLast +
-                pairWordLast.length +
-                2; //cộng thêm 2 dấu phía sau nó (or space).VD: ..bye!"
-            p('end trc handle', end);
-            end = handleEndIndex(end, original);
-            p('end ssau handle', end);
-            String substr =
-                original.substring(0, end).trim(); //0..47:48//tới pairWord
-            p('sub', substr);
-            // original = original.removeDoneString(end);
-            // p('ori trong findLast > -1', original);
-            // int dem = countPunc(original);
-            // String punc = original.substring(0, dem);
-            // p('punc2', punc);
-            result.add(substr);
-            // end = handleEndIndex(end, original);
-            // original = original.substring(end).trim();
-            original = original.removeDoneString(end);
-            p('original removedone in findLast > -1', original); //t
-          } else {
-            onErr(i);
-            return;
-            //not found pairWord
-            //lấy end = indexOf(firstWord of sentence[i+1]) & từ trc firstWord đó phải contain(dấu) else báo err
-            String pair =
-                '${listSentenceNoTime[i + 1][listSentenceNoTime[i + 1].length - 2]} ${listSentenceNoTime[i + 1].last}';
-            p('pair cua cau sau', pair);
-            int end = original.indexOf(pair) - 1;
-            p('end cua pair cau sau', end);
-            if (end > -1) {
-              String sub = original.substring(0, end);
-              List<String> split = sub.split(' '); //tach word
-              if (containPunc(split.last)) {
-                result.add(sub);
-                original = original.removeDoneString(end);
-              } else {
-                onErr(i);
-              }
+        if (sentence.length < 3) {
+          //merge (len<3)
+          listSentenceNoTime[i] += listSentenceNoTime[i + 1];
+          listSentenceNoTime.removeAt(i + 1);
+          p('listSentenceNoTime after merge', listSentenceNoTime);
+          //remove time
+          listTime.removeAt(i + 1);
+          p('listtime after remove', listTime);
+        }
+        //min=3
+        String pairWordLast =
+            '${sentence[sentence.length - 2]} ${sentence.last}'; //cặp từ cuối câu
+        p('pairWordLast', pairWordLast); //t
+        var findLast = original.indexOf(pairWordLast);
+        p('findLast', findLast); //t
+        if (findLast > -1) {
+          int end = findLast +
+              pairWordLast.length+2; //+2 dấu phía sau nó (or space).VD: ..bye!"
+          end = handleEndIndex(end, original);
+          p('end ssau handle', end); //handle err:0..48:49
+          String substr =
+              original.substring(0, end).trim(); //0..47:48//tới pairWord
+          p('sub', substr); //t
+          original = original.removeDoneString(end);
+          int dem = countPunc(original);
+          p('dem punc', dem);
+          String punc = original.substring(0, dem);
+          p('punc2', punc);
+          result.add(substr);
+          // result.add(substr + punc);
+          original = original.removeDoneString(dem); //remove punc
+          p('original removedone in findLast > -1', original); //t
+        } else {
+          //not found pairWord
+          //lấy end = indexOf(firstWord of sentence[i+1]) & từ trc firstWord đó phải contain(dấu) else báo err
+          String pair =
+              '${listSentenceNoTime[i + 1][listSentenceNoTime[i + 1].length - 2]} ${listSentenceNoTime[i + 1].last}';
+          p('pair cua cau sau', pair);
+          int end = original.indexOf(pair) - 1;
+          p('end cua pair cau sau', end);
+          if (end > -1) {
+            String sub = original.substring(0, end);
+            List<String> split = sub.split(' '); //tach word
+            if (containPunc(split.last)) {
+              result.add(sub);
+              original = original.removeDoneString(end);
+            } else {
+              onErr(i, 'Not found pairwordLast');
             }
           }
-        } else {
-          //TODO:merge (len<3)
         }
+        /////////
       } else {
         //handle empty
         String word = '${listSentenceNoTime[i + 1].first} ';
@@ -135,26 +146,32 @@ class BaseBloc {
           // p('substr replace emty', result.last); //empty
           p('original sau handle empty', original);
         } else {
-          onErr(i);
+          onErr(i, 'Handle empty err');
         }
       }
     }
   }
 
   int countPunc(String ori) {
-    //ori lấy từ word đó trở về sau (ko lấy wordword)
+    //ori lấy từ word đó trở về sau (ko lấy word)
     //đếm số dấu ngay sau word
     int dem = 0;
-    while (ori.contains(regex)) {
-      //gặp ký tự thì dừng lại
+    for (int i = 0; i < ori.length; ++i) {
+      if (!ori[i].contains(regex)) {
+        break;
+      }
       ++dem;
     }
+    // while (ori.contains('.')) {
+    //   //gặp ký tự thì dừng lại
+    //   ++dem;
+    // }
     p('count punc', dem);
     return dem;
   }
 
-  onErr(int i) {
-    err += 'Err at ${listTime[i]}';
+  onErr(int i, String text) {
+    err += '$text: Err at ${listTime[i]}';
   }
 
   RegExp regex = RegExp(r'[!.,:;?]');
@@ -175,11 +192,11 @@ class BaseBloc {
   }
 }
 
-extension ListStringExtension on List<String> {
-  bool isEqualSentence(List<String> otherSentence) {
-    return this[0] == otherSentence[0] && last == otherSentence.last;
-  }
-}
+// extension ListStringExtension on List<String> {
+//   bool isEqualSentence(List<String> otherSentence) {
+//     return this[0] == otherSentence[0] && last == otherSentence.last;
+//   }
+// }
 
 extension StringExtension on String {
   String removeDoneString(int start) {
