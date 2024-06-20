@@ -33,10 +33,12 @@ class _MyHomePageState extends State<MyHomePage> {
       body: Center(
         child: Column(
           children: [
-            Text(
-              "Err: ${bloc.err}",
-              style: const TextStyle(
-                  color: Colors.red, fontWeight: FontWeight.bold),
+            SelectionArea(
+              child: Text(
+                "Err: ${bloc.err}",
+                style: const TextStyle(
+                    color: Colors.red, fontWeight: FontWeight.bold),
+              ),
             ),
             Row(
               mainAxisSize: MainAxisSize.min,
