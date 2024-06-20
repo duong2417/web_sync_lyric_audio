@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/widgets.dart';
 import 'package:web_sync_lyrix/my_bloc.dart';
 import 'package:web_sync_lyrix/passage.dart';
 
@@ -35,7 +34,7 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Column(
           children: [
             Text(
-              bloc.err,
+              "Err: ${bloc.err}",
               style: const TextStyle(
                   color: Colors.red, fontWeight: FontWeight.bold),
             ),
@@ -44,7 +43,7 @@ class _MyHomePageState extends State<MyHomePage> {
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: <Widget>[
                 SizedBox(
-                  height: 500,
+                  height: MediaQuery.sizeOf(context).height - 100,
                   width: MediaQuery.sizeOf(context).width / 3 - 30,
                   child: TextField(
                     minLines: 10,
@@ -55,7 +54,7 @@ class _MyHomePageState extends State<MyHomePage> {
                   ),
                 ),
                 SizedBox(
-                  height: 500,
+                  height: MediaQuery.sizeOf(context).height - 50,
                   width: MediaQuery.sizeOf(context).width / 3 - 30,
                   child: TextField(
                     minLines: 10,
@@ -76,14 +75,16 @@ class _MyHomePageState extends State<MyHomePage> {
                         maxLines: 10,
                         decoration:
                             const InputDecoration(label: Text('Result (Lrc)')),
-                        controller: bloc.textLrcCtrl,
+                        controller: bloc.resLrcCtrl,
                       ),
-                      TextField(
-                        minLines: 5,
-                        maxLines: 10,
-                        decoration: const InputDecoration(
-                            label: Text('Result (Passage)')),
-                        controller: passage.passageTextCtrl,
+                      Expanded(
+                        child: TextField(
+                          minLines: 5,
+                          maxLines: 10,
+                          decoration: const InputDecoration(
+                              label: Text('Result (Passage)')),
+                          controller: passage.passageTextCtrl,
+                        ),
                       ),
                     ],
                   ),
@@ -100,7 +101,7 @@ class _MyHomePageState extends State<MyHomePage> {
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
           FloatingActionButton(
-            onPressed:()=> tapConvert(),
+            onPressed: () => tapConvert(),
             tooltip: 'Convert',
             child: const Icon(Icons.add),
           ),
@@ -114,10 +115,21 @@ class _MyHomePageState extends State<MyHomePage> {
           FloatingActionButton(
             onPressed: () {
               Clipboard.setData(
-                  ClipboardData(text: passage.passageTextCtrl.text));
+                  ClipboardData(text: passage.passageTextCtrl.text)); //TODO:
             },
             tooltip: 'Copy passage',
             child: const Icon(Icons.copy),
+          ),
+          FloatingActionButton(
+            onPressed: () {
+              bloc.reset();
+              bloc.resLrcCtrl.clear();
+              bloc.textLrcCtrl.clear();
+              bloc.textOriginalCtrl.clear();
+              bloc.err = '';
+            },
+            tooltip: 'Reset',
+            child: const Icon(Icons.restore_from_trash),
           ),
         ],
       ), // This trailing comma makes auto-formatting nicer for build methods.
@@ -125,6 +137,7 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void tapConvert() {
+    // bloc.count();
     bloc.onTapConvert();
     // passage.findMatch();
     setState(() {});

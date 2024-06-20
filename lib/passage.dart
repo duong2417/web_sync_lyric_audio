@@ -27,9 +27,9 @@ class Passage extends BaseBloc {
         for (int j = 0; j < listNoTime.length; ++j) {
           if (listNoTime[j].isEqualSentence(sentences[i])) {
             // listTimeOfPassage.add(listTime[i]);
-            result = '$result${listTimeOfPassage![i]}\n${passages[a]}\n';
+            // result = '$result${listTimeOfPassage![i]}\n${passages[a]}\n';
             //remove done part of
-            p('listTimeOfPassage', listTimeOfPassage);
+            // p('listTimeOfPassage', listTimeOfPassage);
             listNoTime.removeRange(0, j);
             p('listNoTime remove range', listNoTime);
             flag = 1;
