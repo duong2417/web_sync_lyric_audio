@@ -1,20 +1,114 @@
+import 'dart:developer';
+
 import 'package:flutter/material.dart';
-import 'package:web_sync_lyrix/base_bloc.dart';
 import 'package:web_sync_lyrix/model.dart';
-import 'package:web_sync_lyrix/passage.dart';
+import 'package:web_sync_lyrix/passage_model.dart';
 import 'package:web_sync_lyrix/print.dart';
 
-class Lyric extends BaseBloc {
-  List<LyricModel> listModel = [];
+class Lyric {
+  List<LyricModel> listModel = []; //result
   final textLrcCtrl = TextEditingController();
-  final resLrcCtrl = TextEditingController();
   final textOriginalCtrl = TextEditingController();
+  final resLrcCtrl = TextEditingController();
+  final passageResCtrl = TextEditingController();
   List<String> listLrcText = [], listTime = []; //each row//listOriginalText,
   List<List<String>> listLrcWord = [], listSentenceNoTime = [];
-  List<String> result = []; //là những câu có đầy đủ dấu (original)
-  final passage = Passage();
+  List<OnePassage> passage = [];
+  List<PassageModel> passageModel = []; //result
   int errExit = 0;
+  String handleLineBreak(String text) {
+    p('text linebreak input', text);
+    int flag = 0;
+    for (int i = 0; i < text.length; ++i) {
+      if (text[i] == '\n') {
+        if (flag == 1) {
+          //gặp '\n' lần 2
+          //rm
+          // text = text.replaceRange(i, i, '');
+          text = text.substring(0, i) + text.substring(i + 1);
+          log(text);
+          // p('sub linebreak', sub);//t
+          flag = 0; //reset
+        } else {
+          flag = 1; //đánh dấu là đã gặp '\n' 1 lần rồi
+        }
+      }
+    }
+    return text;
+  }
+
+  handlePassage() {
+    passageModel.add(PassageModel(
+        time: '[00:00.000]', passage: passage[0].passage, index: 1));
+    if (passage.length < 2) {
+      onPassageErr(s: 'Only 1 passage!');
+      return;
+    }
+    List<LyricModel> clone = List.from(listModel);
+    p('clone', clone); //t
+    p('passage trong handlePassage',
+        passage); //[[I’m a student,  I want to tell you about my student life in English,  It’s good practice for you and me!], [], [I study at the Queen Mary University of London, ]]
+    for (int i = 1; i < passage.length; ++i) {
+      for (int j = 0; j < clone.length; ++j) {
+        //1 passage có tối thiểu 1 câu nên file lyric cũng băt đầu từ pt 1
+        p('passage[i].sentences.first:${passage[i].sentences.first},clone[j].sentence:',
+            clone[j].sentence);
+        if (passage[i]
+                .sentences
+                .first
+                .trim()
+                .contains(clone[j].sentence.trim()) ||
+            passage[i].sentences.first.trim() == clone[j].sentence.trim() ||
+            clone[j].sentence.contains(passage[i].sentences.first.trim())) {
+          passageModel.add(PassageModel(
+              time: clone[j].time, passage: passage[i].passage, index: i + 1));
+          p('passageModel', passageModel);
+          //remove done part: từ 0->vị trí listTime đó
+          clone.removeRange(0, j);
+          p('clone rm', clone);
+          break;
+        }
+      }
+    }
+    hanleResPassage(passageModel);
+  }
+
+  hanleResPassage(List<PassageModel> passageModel) {
+    String res = '';
+    p('passageModel trong hanleResPassage', passageModel); //[]
+    for (PassageModel model in passageModel) {
+      res += model.toString();
+      res += '\n';
+    }
+    p('res passage', res);
+    passageResCtrl.text = res;
+  }
+
+  checkResPassage() {
+    for (int i = 0; i < passage.length; ++i) {
+      //passage gốc
+      if (i < passageModel.length) {
+        //passage result
+        int? indexOfPassage = passageModel[i].index;
+        if (indexOfPassage != null) {
+          if (i != indexOfPassage - 1) {
+            onPassageErr(indexOfPassage: indexOfPassage, i: i);
+          }
+        } else {
+          //indexOfPassage null
+        }
+      }
+    }
+  }
+
   splitLrcText() {
+    String xoaBreakLineThua = handleLineBreak(textOriginalCtrl.text);
+    var listPassage = xoaBreakLineThua.split('\n');
+    for (int i = 0; i < listPassage.length; ++i) {
+      passage.add(OnePassage(
+          sentences: listPassage[i].split('.'), passage: listPassage[i]));
+    }
+    p('passage add onepassage', passage);
     listLrcText = textLrcCtrl.text.split('\n');
     int flag = 0;
     for (int i = 0; i < listLrcText.length; ++i) {
@@ -53,29 +147,9 @@ class Lyric extends BaseBloc {
           0]); //sentence empty vẫn add time (add duy nhât lần đầu)//add 1 time
       p('listTime dưới cùng', listTime);
     }
-    // replaceLrcByOriginal();
   }
 
   String resStr = '';
-  // matchTimeWithSentence() {
-  //   resStr = ''; //reset
-  //   int lenListTime = listTime.length;
-  //   int lenListSentence = result.length; //
-  //   if (lenListSentence == lenListTime) {
-  //     // p('EQUAL, time:$lenListTime,res', lenListSentence);
-  //     for (int i = 0; i < lenListSentence; ++i) {
-  //       resStr +=
-  //           '${listTime[i]} ${result[i]}\n'; //Index out of range: index must not be negative: -2
-  //     }
-  //     resLrcCtrl.text =
-  //         resStr; // Index out of range: index should be less than 3: 3
-  //     // p('resStr', resStr);
-  //   } else {
-  //     onErr(0,
-  //         'No equal betwen time and sentence: lenTime: $lenListTime lenSetence:$lenListSentence');
-  //     // p('NO EQUAL, time:$lenListTime,res', lenListSentence);
-  //   }
-  // }
 
   onTapConvert() {
     reset();
@@ -85,8 +159,8 @@ class Lyric extends BaseBloc {
       replaceLrcByOriginal();
       handleResult();
     }
-    // matchTimeWithSentence();
-    // checkResult();
+    handlePassage();
+    checkResPassage();
   }
 
   handleResult() {
@@ -99,10 +173,11 @@ class Lyric extends BaseBloc {
   }
 
   String err = '';
+  String original = '';
   replaceLrcByOriginal() {
     String sub = '';
     listModel = []; //
-    String original = textOriginalCtrl.text
+    original = textOriginalCtrl.text
         .replaceAll("’", "'")
         .replaceAll('\n', ' ')
         .replaceAll('  ', ' ');
@@ -126,7 +201,6 @@ class Lyric extends BaseBloc {
           sub = original.substring(0, end).trim();
           p('sub từ 0->start câu sau', sub);
           // result.add(sub);
-          p('result', result);
           original = original.removeDoneString(end);
           p('ori sau rm done', original);
         }
@@ -235,12 +309,19 @@ class Lyric extends BaseBloc {
   }
 
   onErr(int i, String text) {
-    if (i < listModel.length) {
-      err += '$text:${listModel[i].toString()}';
-    } else {
-      err += '$text (at row ${i + 1})';
+    if (i != -1) {
+      err += '\nAt ROW ${i + 1}:';
+      if (i < listModel.length) {
+        err += '$text:${listModel[i].toString()}}';
+      } else {
+        if (i < listTime.length) {
+          //listTime là list chuẩn//lenListModel <= i < lenListTime => i là index cuối (câu cuối bị lỗi nên ko add vào listModel)
+          err +=
+              'Câu cuối trong văn bản gốc:${listTime[i]} $original'; //original bị căt hêt chỉ còn câu cuối
+        }
+        err += text;
+      }
     }
-    // p('my err', err);
   }
 
   RegExp regex = RegExp(r'[?!.,:;"-_})]');
@@ -260,6 +341,19 @@ class Lyric extends BaseBloc {
     resStr = '';
     err = '';
     errExit = 0;
+    //reset passage
+    passage = [];
+    passageModel = [];
+  }
+
+  void onPassageErr({int i = -1, int indexOfPassage = -1, String? s}) {
+    if (s != null) {
+      err += s;
+    }
+    err += '\nAt PASSAGE $indexOfPassage:';
+    if (i > -1) {
+      err += 'Passage bị thiếu:\n$i\n${passage[i].passage}';
+    }
   }
 }
 

@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:web_sync_lyrix/my_bloc.dart';
-import 'package:web_sync_lyrix/passage.dart';
 
 void main() {
   runApp(const MyApp());
@@ -26,7 +25,6 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final bloc = Lyric();
-  final Passage passage = Passage();
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -73,19 +71,21 @@ class _MyHomePageState extends State<MyHomePage> {
                     mainAxisSize: MainAxisSize.min,
                     children: [
                       TextField(
-                        minLines: 5,
-                        maxLines: 10,
+                        minLines: 7,
+                        maxLines: null,
                         decoration:
                             const InputDecoration(label: Text('Result (Lrc)')),
                         controller: bloc.resLrcCtrl,
                       ),
                       Expanded(
+                        // height: 400, //cp
+                        // width: 300,
                         child: TextField(
-                          minLines: 5,
-                          maxLines: 10,
+                          minLines: 7,
+                          maxLines: null,
                           decoration: const InputDecoration(
                               label: Text('Result (Passage)')),
-                          controller: passage.passageTextCtrl,
+                          controller: bloc.passageResCtrl,
                         ),
                       ),
                     ],
@@ -117,7 +117,7 @@ class _MyHomePageState extends State<MyHomePage> {
           FloatingActionButton(
             onPressed: () {
               Clipboard.setData(
-                  ClipboardData(text: passage.passageTextCtrl.text)); //TODO:
+                  ClipboardData(text: bloc.passageResCtrl.text)); //TODO:
             },
             tooltip: 'Copy passage',
             child: const Icon(Icons.copy),
