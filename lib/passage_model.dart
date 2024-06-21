@@ -4,7 +4,7 @@ class PassageModel {
   int? index;
   @override
   String toString() {
-    return '$index\n$time\n$passage';
+    return '$index\n$passage'; //time\n
   }
 }
 

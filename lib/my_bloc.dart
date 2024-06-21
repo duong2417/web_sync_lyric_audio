@@ -16,26 +16,26 @@ class Lyric {
   List<OnePassage> passage = [];
   List<PassageModel> passageModel = []; //result
   int errExit = 0;
-  String handleLineBreak(String text) {
-    p('text linebreak input', text);
-    int flag = 0;
-    for (int i = 0; i < text.length; ++i) {
-      if (text[i] == '\n') {
-        if (flag == 1) {
-          //gặp '\n' lần 2
-          //rm
-          // text = text.replaceRange(i, i, '');
-          text = text.substring(0, i) + text.substring(i + 1);
-          log(text);
-          // p('sub linebreak', sub);//t
-          flag = 0; //reset
-        } else {
-          flag = 1; //đánh dấu là đã gặp '\n' 1 lần rồi
-        }
-      }
-    }
-    return text;
-  }
+  // String handleLineBreak(String text) {
+  //   p('text linebreak input', text);
+  //   int flag = 0;
+  //   for (int i = 0; i < text.length; ++i) {
+  //     if (text[i] == '\n') {
+  //       if (flag == 1) {
+  //         //gặp '\n' lần 2
+  //         //rm
+  //         // text = text.replaceRange(i, i, '');
+  //         text = text.substring(0, i) + text.substring(i + 1);
+  //         log(text);
+  //         // p('sub linebreak', sub);//t
+  //         flag = 0; //reset
+  //       } else {
+  //         flag = 1; //đánh dấu là đã gặp '\n' 1 lần rồi
+  //       }
+  //     }
+  //   }
+  //   return text;
+  // }
 
   handlePassage() {
     passageModel.add(PassageModel(
@@ -57,9 +57,10 @@ class Lyric {
                 .sentences
                 .first
                 .trim()
-                .contains(clone[j].sentence.trim()) ||
-            passage[i].sentences.first.trim() == clone[j].sentence.trim() ||
-            clone[j].sentence.contains(passage[i].sentences.first.trim())) {
+                .contains(clone[j].sentence.trim().replaceAll(regex, '')) ||
+            // passage[i].sentences.first.trim() == clone[j].sentence.trim() ||
+            clone[j].sentence.contains(
+                passage[i].sentences.first.trim().replaceAll(regex, ''))) {
           passageModel.add(PassageModel(
               time: clone[j].time, passage: passage[i].passage, index: i + 1));
           p('passageModel', passageModel);
@@ -102,49 +103,66 @@ class Lyric {
   }
 
   splitLrcText() {
-    String xoaBreakLineThua = handleLineBreak(textOriginalCtrl.text);
-    var listPassage = xoaBreakLineThua.split('\n');
+    // String xoaBreakLineThua =
+    //     textOriginalCtrl.text.replaceAll(RegExp(r'\n+'), '\n');
+    // log(xoaBreakLineThua);
+    List<String> listPassage = textLrcCtrl.text.split('\n')
+      ..forEach((element) {
+        element.trim();
+      });
     for (int i = 0; i < listPassage.length; ++i) {
       passage.add(OnePassage(
-          sentences: listPassage[i].split('.'), passage: listPassage[i]));
+          sentences: listPassage[i].split('.'), //.split(RegExp(r'[.?!;]'))
+          // ..removeWhere((element) => element.isEmpty),
+          passage: listPassage[i]));
     }
-    p('passage add onepassage', passage);
+    p('passage add onepassage', passage);//t
     listLrcText = textLrcCtrl.text.split('\n');
     int flag = 0;
     for (int i = 0; i < listLrcText.length; ++i) {
       String sentence = listLrcText[i];
       if (sentence.isEmpty) {
-        onErr(i, 'Sentence empty (ko có cả time)');
+        onErr(i,
+            'File chứa câu empty ko có cả time, nhập time tại đó và thử lại!');
         errExit = -1;
         break;
       }
       if (sentence.contains(' ')) {
+        //câu lyric đó có chứa word
 //split ra từng từ
-        listLrcWord.add([]); //
+        listLrcWord.add([]);
         listLrcWord.last = sentence.split(' '); //[0]=time
-        p('listLrcWord.last', listLrcWord.last);
+        p('listLrcWord', listLrcWord);
         List<String> words = listLrcWord.last.sublist(1);
         p('words', words);
         listSentenceNoTime.add(words); //list con băt đầu từ 1
         p('listSentenceNoTime',
             listSentenceNoTime); //["Curiouser, and, curiouser!"]
+        listTime.add(listLrcWord.last[0]); //đặt trong vòng for (=số câu lyrix)
       } else {
         //sentence empty (vẫn có time)
         p('flag', flag);
         if (flag == 1) {
-          onErr(i,
-              'Có hơn 1 câu null, hãy xóa và chừa lại time của câu null đầu tiên rồi thử lại!');
-          errExit = -1;
-          return;
+          onErr(i, 'Có hơn 1 câu null, tôi đã merge chúng thành 1');
+          listLrcText.removeAt(i); //xóa cả time và câu
+          p('listLrcText',
+              listLrcText); //t:[[00:00.000] I'm a student, [00:01.000], [00:07.000] I study at the Queen Mary University of London.]
+          // if (i > 0) {
+          --i; //for tăng i lên nên nếu i=-1 thì tăn lên là 0
+          // }
         } else {
+          //empty lần đầu
           listSentenceNoTime.add(
               []); //sentence empty cx phải add để hồi xử lý//add duy nhât lần đầu tiên (flag=0)
           //   p('listSentenceNoTime add empy', listSentenceNoTime);
+          listLrcWord.last = [sentence.trim()];
+          listTime.add(listLrcWord.last[
+              0]); //sentence empty vẫn add time (add duy nhât lần đầu)//add 1 time
+          p('listLrcWord trong add empty đầu tiên', listLrcWord);
           flag = 1;
         }
       }
-      listTime.add(listLrcWord.last[
-          0]); //sentence empty vẫn add time (add duy nhât lần đầu)//add 1 time
+      // listTime.add(listLrcWord.last[0]); //đặt trong vòng for (=số câu lyrix)
       p('listTime dưới cùng', listTime);
     }
   }
@@ -177,29 +195,27 @@ class Lyric {
   replaceLrcByOriginal() {
     String sub = '';
     listModel = []; //
-    original = textOriginalCtrl.text
-        .replaceAll("’", "'")
-        .replaceAll('\n', ' ')
-        .replaceAll('  ', ' ');
+    original = textOriginalCtrl.text.replaceAll("’", "'").replaceAll('\n', ' ');
+    // .replaceAll('  ', ' ');
     for (int i = 0; i < listSentenceNoTime.length; ++i) {
       List<String> sentence = listSentenceNoTime[i];
       if (sentence.isEmpty) {
         int a = i + 1;
         if (a >= listSentenceNoTime.length) {
-          onErr(i,
-              'Sentence empty và không có câu sau nó (vì nó là câu cuối cùng)');
+          onErr(i, 'Sentence empty và không có câu sau nó (maybe là câu cuối)');
           return;
         }
         String pair =
-            '${listSentenceNoTime[i + 1].first} ${listSentenceNoTime[i + 1][1]}'; //
+            '${listSentenceNoTime[i + 1].first} ${listSentenceNoTime[i + 1][1]}'; //đã merge câu ngắn nên số word luôn >= 2
         p('pair cua cau sau', pair); //is German
-        int end = original.indexOf(pair); //- 1;//- space
+        int end =
+            original.indexOf(pair); //- 1space//nếu có dư space thì đã trim rồi
         p('end cua pair cau sau', end);
         if (end > -1) {
           end = handleEndIndex(end, original);
           p('end sau handle', end);
           sub = original.substring(0, end).trim();
-          p('sub từ 0->start câu sau', sub);
+          p('sub từ 0->start câu sau', sub); //t
           // result.add(sub);
           original = original.removeDoneString(end);
           p('ori sau rm done', original);
@@ -243,7 +259,10 @@ class Lyric {
           p('ori sau removeDone(lấy từ punc đến hết)', original); //t
           int dem = countPunc(
               original); // Index out of range: index should be less than 4: 4
-          String punc = original.substring(0, dem);
+          String punc = '';
+          if (dem > 0) {
+            punc = original.substring(0, dem);
+          }
           p('punc (ori sau khi cat tới dem để lấy punc)', punc); //t//me!
           sub = substr + punc;
           p('sub+punc', sub); //It's good practice for you andme!
@@ -251,17 +270,21 @@ class Lyric {
           p('original removedone in findLast > -1',
               original); //t//empty chạy ts dây
         } else {
-          onErr(
-              i, 'No err (just not found lastWord and I just used other way)');
+          // onErr(
+          //     i, 'No err (just not found lastWord and I just used other way)');
           //lấy end = indexOf(firstWord of sentence[i+1]) & từ trc firstWord đó phải contain(dấu) else báo err
           int a = i + 1;
           if (a >= listSentenceNoTime.length) {
             errExit = -1;
-            onErr(i, 'Câu cuối có cặp từ cuối ko trùng khớp');
+            onErr(a, 'Câu cuối có cặp từ cuối ko trùng khớp');
             break;
           }
-          String pair =
-              '${listSentenceNoTime[a].first} ${listSentenceNoTime[a][1]}';
+          String pair;
+          if (listSentenceNoTime[a].length > 1) {
+            pair = '${listSentenceNoTime[a].first} ${listSentenceNoTime[a][1]}';
+          } else {
+            pair = listSentenceNoTime[a].first;
+          }
           int end = original.indexOf(pair);
           // p('end cua pair cau sau', end);
           if (end > -1) {
@@ -276,7 +299,7 @@ class Lyric {
         }
       }
       //sentence empty vẫn add
-      listModel.add(LyricModel(time: listTime[i], sentence: sub));
+      listModel.add(LyricModel(time: listTime[i], sentence: sub)); //
       p('model', listModel.toString());
     }
   }
@@ -285,7 +308,7 @@ class Lyric {
     //ori lấy từ word đó trở về sau (ko lấy word)
     //đếm số dấu ngay sau word
     int dem = 0;
-    p('ori trc khi dem punc', ori);
+    p('ori trc khi dem punc', ori); //ko chua punc
     ori = ori
         .trim(); //and "how" => trim là lấy dấu câu khác//and ! => ko trim là ko lấy đc dấu !//đa số punc để sát word
     p('ori trc khi dem punc, sau trim',
@@ -310,21 +333,24 @@ class Lyric {
 
   onErr(int i, String text) {
     if (i != -1) {
-      err += '\nAt ROW ${i + 1}:';
+      //-1 là ko hiện index,chỉ hiện text
+      err += 'At ROW ${i + 1}:';
       if (i < listModel.length) {
         err += '$text:${listModel[i].toString()}}';
       } else {
         if (i < listTime.length) {
           //listTime là list chuẩn//lenListModel <= i < lenListTime => i là index cuối (câu cuối bị lỗi nên ko add vào listModel)
           err +=
-              'Câu cuối trong văn bản gốc:${listTime[i]} $original'; //original bị căt hêt chỉ còn câu cuối
+              'đã merge tại: ${listTime[i]}'; //original bị căt hêt chỉ còn câu cuối
         }
-        err += text;
+        // err += text;
       }
     }
+    err += text;
+    err += '\n';
   }
 
-  RegExp regex = RegExp(r'[?!.,:;"-_})]');
+  RegExp regex = RegExp(r'[?!.,:;"-_]');
   bool containPunc(String str) {
     return str.contains(regex);
   }
@@ -350,10 +376,11 @@ class Lyric {
     if (s != null) {
       err += s;
     }
-    err += '\nAt PASSAGE $indexOfPassage:';
+    err += ' At PASSAGE $indexOfPassage:';
     if (i > -1) {
       err += 'Passage bị thiếu:\n$i\n${passage[i].passage}';
     }
+    err += '\n';
   }
 }
 

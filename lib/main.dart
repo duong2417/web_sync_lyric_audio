@@ -29,74 +29,78 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: Center(
-        child: Column(
-          children: [
-            SelectionArea(
-              child: Text(
-                "Err: ${bloc.err}",
-                style: const TextStyle(
-                    color: Colors.red, fontWeight: FontWeight.bold),
+        child: SingleChildScrollView(
+          child: Column(
+            children: [
+              SelectionArea(
+                child: Text(
+                  bloc.err,
+                  style: const TextStyle(
+                      color: Colors.red, fontWeight: FontWeight.bold),
+                ),
               ),
-            ),
-            Row(
-              mainAxisSize: MainAxisSize.min,
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: <Widget>[
-                SizedBox(
-                  height: MediaQuery.sizeOf(context).height - 100,
-                  width: MediaQuery.sizeOf(context).width / 3 - 30,
-                  child: TextField(
-                    minLines: 10,
-                    maxLines: null,
-                    controller: bloc.textOriginalCtrl,
-                    decoration:
-                        const InputDecoration(label: Text('Nhập văn bản gốc')),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: <Widget>[
+                  SizedBox(
+                    height: MediaQuery.sizeOf(context).height - 100,
+                    width: MediaQuery.sizeOf(context).width / 3 - 30,
+                    child: TextField(
+                      minLines: 10,
+                      maxLines: null,
+                      controller: bloc.textOriginalCtrl,
+                      decoration: const InputDecoration(
+                          label: Text('Nhập văn bản gốc')),
+                    ),
                   ),
-                ),
-                SizedBox(
-                  height: MediaQuery.sizeOf(context).height - 50,
-                  width: MediaQuery.sizeOf(context).width / 3 - 30,
-                  child: TextField(
-                    minLines: 10,
-                    maxLines: null,
-                    decoration:
-                        const InputDecoration(label: Text('Nhập file lrc')),
-                    controller: bloc.textLrcCtrl,
+                  SizedBox(
+                    height: MediaQuery.sizeOf(context).height - 50,
+                    width: MediaQuery.sizeOf(context).width / 3 - 30,
+                    child: TextField(
+                      minLines: 10,
+                      maxLines: null,
+                      decoration:
+                          const InputDecoration(label: Text('Nhập file lrc')),
+                      controller: bloc.textLrcCtrl,
+                    ),
                   ),
-                ),
-                SizedBox(
-                  height: 400, //cp
-                  width: 300, //cp
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      TextField(
-                        minLines: 7,
-                        maxLines: null,
-                        decoration:
-                            const InputDecoration(label: Text('Result (Lrc)')),
-                        controller: bloc.resLrcCtrl,
+                  SizedBox(
+                    height: 400, //cp
+                    width: 300, //cp
+                    child: SingleChildScrollView(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          TextField(
+                            minLines: 7,
+                            maxLines: null,
+                            decoration: const InputDecoration(
+                                label: Text('Result (Lrc)')),
+                            controller: bloc.resLrcCtrl,
+                          ),
+                          SizedBox(
+                            height: 200, //cp
+                            // width: 300,
+                            child: TextField(
+                              minLines: 7,
+                              maxLines: null,
+                              decoration: const InputDecoration(
+                                  label: Text('Result (Passage)')),
+                              controller: bloc.passageResCtrl,
+                            ),
+                          ),
+                        ],
                       ),
-                      Expanded(
-                        // height: 400, //cp
-                        // width: 300,
-                        child: TextField(
-                          minLines: 7,
-                          maxLines: null,
-                          decoration: const InputDecoration(
-                              label: Text('Result (Passage)')),
-                          controller: bloc.passageResCtrl,
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
-                // Expanded(
-                //   child: SingleChildScrollView(child: Text(bloc.resStr)),
-                // )
-              ],
-            ),
-          ],
+                  // Expanded(
+                  //   child: SingleChildScrollView(child: Text(bloc.resStr)),
+                  // )
+                ],
+              ),
+            ],
+          ),
         ),
       ),
       floatingActionButton: Row(
