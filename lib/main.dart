@@ -130,6 +130,7 @@ class _MyHomePageState extends State<MyHomePage> {
             onPressed: () {
               bloc.reset();
               bloc.resLrcCtrl.clear();
+              bloc.passageResCtrl.clear();
               bloc.textLrcCtrl.clear();
               bloc.textOriginalCtrl.clear();
               bloc.err = '';
