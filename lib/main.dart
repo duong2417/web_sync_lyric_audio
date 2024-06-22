@@ -41,10 +41,10 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               Row(
                 mainAxisSize: MainAxisSize.min,
-                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                // mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: <Widget>[
                   SizedBox(
-                    height: MediaQuery.sizeOf(context).height - 100,
+                    height: MediaQuery.sizeOf(context).height - 200,
                     width: MediaQuery.sizeOf(context).width / 3 - 30,
                     child: TextField(
                       minLines: 10,
@@ -55,7 +55,7 @@ class _MyHomePageState extends State<MyHomePage> {
                     ),
                   ),
                   SizedBox(
-                    height: MediaQuery.sizeOf(context).height - 50,
+                    height: MediaQuery.sizeOf(context).height - 200,
                     width: MediaQuery.sizeOf(context).width / 3 - 30,
                     child: TextField(
                       minLines: 10,
@@ -65,15 +65,15 @@ class _MyHomePageState extends State<MyHomePage> {
                       controller: bloc.textLrcCtrl,
                     ),
                   ),
-                  SizedBox(
-                    height: 400, //cp
-                    width: 300, //cp
+                  Expanded(
+                    // height: 400, //cp
+                    // width: 300, //cp
                     child: SingleChildScrollView(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           TextField(
-                            minLines: 7,
+                            minLines: 10,
                             maxLines: null,
                             decoration: const InputDecoration(
                                 label: Text('Result (Lrc)')),
@@ -82,8 +82,8 @@ class _MyHomePageState extends State<MyHomePage> {
                           SizedBox(
                             height: 200, //cp
                             // width: 300,
-                            child: TextField(
-                              minLines: 7,
+                            child: TextFormField(
+                              minLines: 15,
                               maxLines: null,
                               decoration: const InputDecoration(
                                   label: Text('Result (Passage)')),
@@ -94,9 +94,6 @@ class _MyHomePageState extends State<MyHomePage> {
                       ),
                     ),
                   ),
-                  // Expanded(
-                  //   child: SingleChildScrollView(child: Text(bloc.resStr)),
-                  // )
                 ],
               ),
             ],
@@ -120,8 +117,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           FloatingActionButton(
             onPressed: () {
-              Clipboard.setData(
-                  ClipboardData(text: bloc.passageResCtrl.text)); //TODO:
+              Clipboard.setData(ClipboardData(text: bloc.passageResCtrl.text));
             },
             tooltip: 'Copy passage',
             child: const Icon(Icons.copy),
@@ -129,17 +125,24 @@ class _MyHomePageState extends State<MyHomePage> {
           FloatingActionButton(
             onPressed: () {
               bloc.reset();
-              bloc.resLrcCtrl.clear();
+              // bloc.resLrcCtrl.clear();
               bloc.passageResCtrl.clear();
               bloc.textLrcCtrl.clear();
               bloc.textOriginalCtrl.clear();
-              bloc.err = '';
+              setState(() {});//rm err
             },
             tooltip: 'Reset',
             child: const Icon(Icons.restore_from_trash),
           ),
+          // FloatingActionButton(
+          //   onPressed: () {
+          //     bloc.checkResult(bloc.resLrcCtrl.text);
+          //   },
+          //   tooltip: 'Check Result',
+          //   child: const Icon(Icons.check),
+          // ),
         ],
-      ), // This trailing comma makes auto-formatting nicer for build methods.
+      ),
     );
   }
 
