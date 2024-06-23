@@ -1,35 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:web_sync_lyrix/err_model.dart';
-import 'package:web_sync_lyrix/print.dart';
 
 class CustomTextEditCtrl extends TextEditingController {
-  // List<ErrorModel> get listErrTime => listErr;
   List<ErrorModel> listErr = [];
-  List<TextSpan> spans = [];
   List<StartOfErr> starts = [];
-
   @override
   TextSpan buildTextSpan(
       {required BuildContext context,
       TextStyle? style,
       required bool withComposing}) {
+    List<TextSpan> spans = []; //cp at here to edit text
     if (listErr.isNotEmpty) {
-      p('listErr', listErr);
-//       for (int i = 0; i < listErr.length - 1; ++i) {
-//         for (int j = i; j < listErr.length; ++j) {
-//           if (listErr[i].timeLine == listErr[j].timeLine) {
-// //rm j
-//             listErr.removeAt(j);
-//           }
-//         }
-//       }
-      p('listerr xoa trung', listErr);
+      // p('listErr', listErr);
       for (int i = 0; i < listErr.length; ++i) {
         int s = text.indexOf(listErr[i].timeLine);
         if (s > -1) {
           final e = StartOfErr(
-              color:
-                  listErr[i].type == TypeErr.error ? Colors.red : Colors.blue,
+              color: listErr[i].type == TypeErr.warn ? Colors.blue : Colors.red,
               index: s);
           if (starts.isEmpty) {
             starts.add(e);
@@ -44,8 +31,7 @@ class CustomTextEditCtrl extends TextEditingController {
           }
         }
       }
-      p('starts khi sort', starts);
-      // starts.sort((a, b) => a.index.compareTo(b.index));
+      // p('starts khi sort', starts);
       // p('sort', starts);
       int start = 0;
       for (int i = 0; i < starts.length; ++i) {

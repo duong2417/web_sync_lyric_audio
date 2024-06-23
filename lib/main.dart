@@ -65,22 +65,23 @@ class _MyHomePageState extends State<MyHomePage> {
                       controller: bloc.textLrcCtrl,
                     ),
                   ),
-                  Expanded(
-                    // height: 400, //cp
-                    // width: 300, //cp
+                  Expanded(//cp
                     child: SingleChildScrollView(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,
                         children: [
-                          TextField(
-                            minLines: 10,
-                            maxLines: null,
-                            decoration: const InputDecoration(
-                                label: Text('Result (Lrc)')),
-                            controller: bloc.resLrcCtrl,
+                          SizedBox(
+                            height: 500,
+                            child: TextField(
+                              minLines: 10,
+                              maxLines: null,
+                              decoration: const InputDecoration(
+                                  label: Text('Result (Lrc)')),
+                              controller: bloc.resLrcCtrl,
+                            ),
                           ),
                           SizedBox(
-                            height: 200, //cp
+                            height: 300, //cp
                             // width: 300,
                             child: TextFormField(
                               minLines: 15,
@@ -125,31 +126,21 @@ class _MyHomePageState extends State<MyHomePage> {
           FloatingActionButton(
             onPressed: () {
               bloc.reset();
-              // bloc.resLrcCtrl.clear();
               bloc.passageResCtrl.clear();
               bloc.textLrcCtrl.clear();
               bloc.textOriginalCtrl.clear();
-              setState(() {});//rm err
+              setState(() {}); //rm err
             },
             tooltip: 'Reset',
             child: const Icon(Icons.restore_from_trash),
           ),
-          // FloatingActionButton(
-          //   onPressed: () {
-          //     bloc.checkResult(bloc.resLrcCtrl.text);
-          //   },
-          //   tooltip: 'Check Result',
-          //   child: const Icon(Icons.check),
-          // ),
         ],
       ),
     );
   }
 
   void tapConvert() {
-    // bloc.count();
     bloc.onTapConvert();
-    // passage.findMatch();
     setState(() {});
   }
 }
