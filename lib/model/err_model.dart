@@ -20,4 +20,13 @@ class StartOfErr {
   }
 }
 
+class SentenceHighlight {
+  SentenceHighlight({required this.start, required this.end});
+  int start, end;
+  @override
+  String toString() {
+    return 'start:$start,end:$end';
+  }
+}
+
 enum TypeErr { warn, error }

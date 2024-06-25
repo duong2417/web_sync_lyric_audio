@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:web_sync_lyrix/err_model.dart';
+import 'package:web_sync_lyrix/model/err_model.dart';
 
 class CustomTextEditCtrl extends TextEditingController {
   List<ErrorModel> listErr = [];

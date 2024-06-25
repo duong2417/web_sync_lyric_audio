@@ -1,23 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:web_sync_lyrix/custom_textfield.dart';
-import 'package:web_sync_lyrix/err_model.dart';
+import 'package:web_sync_lyrix/custom_textfield/custom_lrc_textfield.dart';
+import 'package:web_sync_lyrix/custom_textfield/custom_ori_textfield.dart';
+import 'package:web_sync_lyrix/custom_textfield/custom_textfield.dart';
+import 'package:web_sync_lyrix/model/err_model.dart';
 import 'package:web_sync_lyrix/extension.dart';
-import 'package:web_sync_lyrix/model.dart';
+import 'package:web_sync_lyrix/model/model.dart';
 import 'package:web_sync_lyrix/passage_model.dart';
-import 'package:web_sync_lyrix/print.dart';
 
 class Lyric {
   List<LyricModel> listModelOfLrcResult = []; //result
   List<LyricModel> listModelOfLrc = []; //result
-  final textLrcCtrl = TextEditingController();
-  final textOriginalCtrl = TextEditingController();
+  final textLrcCtrl = CustomLrcTextField();
+  final textOriginalCtrl = CustomOriTextField();
   final resLrcCtrl = CustomTextEditCtrl();
   final passageResCtrl = TextEditingController();
   List<String> listLrcText = [], listTime = []; //each row//listOriginalText,
   List<List<String>> listLrcWord = [], listSentenceNoTime = [];
   List<OnePassage> passage = [];
   List<PassageModel> passageModel = []; //result
-  int errExit = 0;
   handlePassage() {
     if (passage.length < 2) {
       passageModel.add(PassageModel(
@@ -73,7 +73,7 @@ class Lyric {
         '\n') //lrc phải xóa hêt dấu, chỉ còn chữ thì câu trong passage dễ contain hơn (nhiều khi máy tự thêm dấu sai)
       ..removeWhere((element) => element.isEmpty)
       ..forEach((element) {
-        element = element.trim(); //remove \n thừa//f
+        element = element.trim();
       });
     for (int i = 0; i < listLrcText.length; ++i) {
       String sentence = listLrcText[i];
@@ -86,8 +86,17 @@ class Lyric {
   }
 
   void onWarning(int i) {
-    String timeLine = listTime[i < listTime.length ? i : listTime.length - 1];
-    resLrcCtrl.listErr.add(ErrorModel(timeLine: timeLine));
+    //phải là leng result vì có mấy cái time có trong listModelOfLrc thì ko có result(đã xóa)
+    if (i < listModelOfLrcResult.length) {
+      String timeLine = listModelOfLrcResult[i].time;
+      resLrcCtrl.listErr.add(ErrorModel(timeLine: timeLine));
+    }
+
+    // if (i < listModelOfLrc.length) {
+    //   String timeLine = listModelOfLrc[i].time;
+    //   resLrcCtrl.listErr
+    //       .add(ErrorModel(timeLine: timeLine, type: TypeErr.error));
+    // }
   }
 
   String resStr = '';
@@ -96,18 +105,16 @@ class Lyric {
     reset();
     pretreatmentOri();
     splitLrcText();
-    if (errExit == 0) {
-      //success
-      replaceLrcByOriginal();
-      handleLrcResult();
-      handlePassage();
-    }
+    //success
+    replaceLrcByOriginal();
+    handleLrcResult();
+    handlePassage();
   }
 
   handleLrcResult() {
     int flag = 0;
     for (int i = 0; i < listModelOfLrcResult.length; ++i) {
-      final e = listModelOfLrcResult[i];
+      final e = listModelOfLrcResult[i]; //-1
       if (e.sentence != '') {
         resStr += e.toString();
       } else {
@@ -139,9 +146,10 @@ class Lyric {
     listModelOfLrcResult = [];
     int end;
     //oriOfLrc
-    oriNoPunc = original.replaceAll('\n',
-        ' '); //nếu '' thì từ đầu cuối đoạn trc và đầu đoạn sau hợp lại thành 1 từ
-    // oriNoPunc = oriOfLrc.toLowerCase(); //replaceAll(puncReg, '');
+    oriNoPunc = original.replaceAll(RegExp(r'\n+'),
+        '\n'); //nếu '' thì từ đầu cuối đoạn trc và đầu đoạn sau hợp lại thành 1 từ
+    // oriNoPunc = original;
+    textOriginalCtrl.text = oriNoPunc;
     int flag = 0;
     bool isMatch; //TRUE khi notEmpty&match
     for (int i = 0; i < listModelOfLrc.length; ++i) {
@@ -152,15 +160,12 @@ class Lyric {
         //but có 1word thì dễ trùng dẫn đến xac dinh index sai (nếu từ đó trong lrc sai nữa mà vô tình trùng khơp vs ori thì sai hoàn toàn)
         //ưu tiên độ chính xac nên min=3 lỡ merge câu dài quá cx ko sao. thà dài còn hơn sai
         //trim().isNotEmpty
+        //thought Alice => nên tach riêng ra nên min=2 là đẹp
         String cau = model.sentence.toLowerCase();
-        end = oriNoPunc
-            //.replaceAll(dauNgatCau, '')
-            .toLowerCase()
-            .indexOf(cau);
+        end = oriNoPunc.toLowerCase().indexOf(cau);
         if (end > -1) {
           isMatch = true; //reset
           flag = 0; //reset
-          p('contain, end:$end, ori:$oriNoPunc,model:', model);
           //note: tìm thấy rồi thì handle câu empty trc trc khi removeDone
           if (i >= 1) {
             int pre = listModelOfLrcResult
@@ -175,6 +180,10 @@ class Lyric {
                 //-1:lùi lại 1 dấu (nháy...) để nó ko lấy dấu mở của câu sau
                 listModelOfLrcResult[pre].sentence = sub;
                 oriNoPunc = oriNoPunc.removeDoneString(end);
+                int startOfHighlight = textOriginalCtrl.text.indexOf(sub);
+                onHighlightOri(SentenceHighlight(
+                    start: startOfHighlight,
+                    end: startOfHighlight + sub.length));
               }
             }
           }
@@ -183,18 +192,13 @@ class Lyric {
               handleEndIndex(end, oriNoPunc); //+1 nó lấy ký tự đầu của câu sau
           //index = cuối câu thì căt nó ko lấy ký tự cuối nên phải +1
           String text = oriNoPunc.substring(0, end);
-          // p('text 0->cuoi cau', text);
           oriNoPunc = oriNoPunc.removeDoneString(end);
-          // p('oriOfLrc sau rm1', oriNoPunc); //k lấy space đầu
-          // String kyTuConThieu = countText(oriNoPunc);
           sub = text;
           int demPunc = countPunc(oriNoPunc);
           if (demPunc > 0) {
             String punc = oriNoPunc.substring(0, demPunc);
             sub += punc;
-            // p('sub+punc', sub);
             oriNoPunc = oriNoPunc.removeDoneString(demPunc); //remove punc
-            // p('oriNoPunc rm punc', oriNoPunc);
           }
           listModelOfLrcResult.add(LyricModel(time: model.time, sentence: sub));
         } else {
@@ -211,42 +215,30 @@ class Lyric {
             //cau cuoi ko co cau sau
             model2 = LyricModel(time: model.time, sentence: oriNoPunc);
             // p('model2 cua cau cuoi',
-            //     model2); //chỉ câu cuối empty (mấy câu trc ko emp) ms nhảy dô đây
+            //     model2); //chỉ câu cuối not match (mấy câu trc ko emp) ms nhảy dô đây
+            onErr(i, 'Câu cuối not match, đã handle');
           } else {
             model2 = LyricModel(time: model.time, sentence: '');
           }
           //not match vẫn add để lấy time rồi hồi match thì handle sentence của những câu trc
           listModelOfLrcResult.add(model2);
-          // p('listModelOfLrcResult sau add empty dau tien',
-          //     listModelOfLrcResult);
           flag = 1; //khi match roi thi reset=0
           onWarning(i); //not match lần đầu
         } else {
           //nhữn câu empty sau thì do nothing
-          onErr(i, '>=2 câu liên tục ko match, đã merge');
+          onLrcErr(i, '>=2 câu liên tục ko match, đã merge');
+          //do này ko add vào result nên phải lấy time trong listModelOfLrc
         }
       }
     }
-  }
-
-  bool setNextTime(int a) {
-    if (a < listTime.length) {
-      listModelOfLrc[a].time = listModelOfLrc[a - 1].time; //t
-    } else {
-      //câu cuối:listTime giữ nguyên (vẫn là time của câu sau (thay vì câu đầu))
-    }
-    onWarning(a); //not found pairWordFirst
-    return false;
   }
 
   int countPunc(String ori) {
     //ori lấy từ word đó trở về sau (ko lấy word)
     //đếm số dấu ngay sau word
     int dem = 0;
-    // ori = ori
-    //     .trim(); //and "how" => trim là lấy dấu câu khác//and ! => ko trim là ko lấy đc dấu !//đa số punc để sát word
     for (int i = 0; i < ori.length; ++i) {
-      if (ori[i] == ' ') {
+      if (ori[i] == ' ' || ori[i] == '\n') {
         break;
       }
       ++dem;
@@ -256,14 +248,18 @@ class Lyric {
 
   onErr(int i, String text) {
     err += text;
-    if (i > -1) {
-      int a = i < listTime.length ? i : listTime.length - 1;
+    if (i > -1 && i < listModelOfLrcResult.length) {
+      String timeLine = listModelOfLrcResult[i].time;
       resLrcCtrl.listErr
-          .add(ErrorModel(type: TypeErr.error, timeLine: listTime[a]));
+          .add(ErrorModel(type: TypeErr.error, timeLine: timeLine));
       //i=-1 là ko hiện index,chỉ hiện text
-      err += ' (at lrc ${listTime[a]})';
+      err += ' (at $timeLine)';
     }
     err += '\n';
+  }
+
+  onHighlightOri(SentenceHighlight model) {
+    textOriginalCtrl.listIndex.add(model);
   }
 
   void reset() {
@@ -277,12 +273,13 @@ class Lyric {
     listModelOfLrcResult = [];
     resStr = '';
     err = '';
-    errExit = 0;
     passage = [];
     passageModel = [];
     resLrcCtrl.clear();
     resLrcCtrl.text = '';
     resLrcCtrl.listErr = [];
+    textLrcCtrl.listErr = [];
+    textOriginalCtrl.listIndex = [];
   }
 
   void onPassageErr({int i = -1, int indexOfPassage = -1, String? s}) {
@@ -296,14 +293,13 @@ class Lyric {
     err += '\n';
   }
 
-  String countText(String text) {
-    String kyTuConThieu = '';
-    for (int i = 0; i < text.length; ++i) {
-      if (text[i] == ' ') {
-        break;
-      }
-      kyTuConThieu += text[i];
+  void onLrcErr(int i, String s) {
+    if (i < listModelOfLrc.length) {
+      String timeLine = listModelOfLrc[i].time;
+      textLrcCtrl.listErr
+          .add(ErrorModel(type: TypeErr.error, timeLine: timeLine));
+      //i=-1 là ko hiện index,chỉ hiện text
+      err += 'At $timeLine: $s\n';
     }
-    return kyTuConThieu;
   }
 }
