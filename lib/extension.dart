@@ -1,6 +1,8 @@
-// RegExp punc = RegExp("[\"'?!.,:;-_(){}]"); //punc
+RegExp puncReg = RegExp(r'["?!.,:;-_—(){}]'); //punc '
+RegExp dauNgatCau = RegExp(r'[,]'); //punc '//good-bye//-_—
 RegExp closePunc = RegExp("[\"”'’?!.,:;-_)}—]"); //punc
-RegExp openPunc = RegExp(r'[“(‘{]'); //punc
+RegExp charactor =RegExp(r'[A-Z][a-z]'); //punc
+// RegExp openPunc = RegExp(r'[“(‘{]'); //punc
 // bool containPunc(String str) {
 //   return str.contains(punc);
 // }

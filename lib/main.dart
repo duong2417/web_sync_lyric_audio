@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:web_sync_lyrix/my_bloc.dart';
+import 'package:web_sync_lyrix/bloc3.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,7 +18,6 @@ class MyApp extends StatelessWidget {
 
 class MyHomePage extends StatefulWidget {
   const MyHomePage({super.key});
-
   @override
   State<MyHomePage> createState() => _MyHomePageState();
 }
@@ -65,7 +64,8 @@ class _MyHomePageState extends State<MyHomePage> {
                       controller: bloc.textLrcCtrl,
                     ),
                   ),
-                  Expanded(//cp
+                  Expanded(
+                    //cp
                     child: SingleChildScrollView(
                       child: Column(
                         mainAxisSize: MainAxisSize.min,

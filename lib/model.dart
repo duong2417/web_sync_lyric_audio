@@ -1,6 +1,7 @@
 class LyricModel {
-  LyricModel({required this.time, required this.sentence, this.index});
-  String time, sentence;
+  LyricModel({required this.time, this.sentence='', this.index});
+  String time;
+  String sentence;
   int? index;
   @override
   String toString() {

@@ -3,15 +3,14 @@ import 'package:web_sync_lyrix/err_model.dart';
 
 class CustomTextEditCtrl extends TextEditingController {
   List<ErrorModel> listErr = [];
-  List<StartOfErr> starts = [];
   @override
   TextSpan buildTextSpan(
       {required BuildContext context,
       TextStyle? style,
       required bool withComposing}) {
-    List<TextSpan> spans = []; //cp at here to edit text
+    List<StartOfErr> starts = [];
+    List<TextSpan> spans = []; //cp at here to edit text (reset mỗi lần gọi)
     if (listErr.isNotEmpty) {
-      // p('listErr', listErr);
       for (int i = 0; i < listErr.length; ++i) {
         int s = text.indexOf(listErr[i].timeLine);
         if (s > -1) {
@@ -31,8 +30,6 @@ class CustomTextEditCtrl extends TextEditingController {
           }
         }
       }
-      // p('starts khi sort', starts);
-      // p('sort', starts);
       int start = 0;
       for (int i = 0; i < starts.length; ++i) {
         int end = starts[i].index + 11;

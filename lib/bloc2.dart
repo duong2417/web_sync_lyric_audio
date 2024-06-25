@@ -4,7 +4,6 @@
 // import 'package:web_sync_lyrix/extension.dart';
 // import 'package:web_sync_lyrix/model.dart';
 // import 'package:web_sync_lyrix/passage_model.dart';
-// import 'package:web_sync_lyrix/print.dart';
 
 // class Lyric {
 //   List<LyricModel> listModel = []; //result
@@ -45,7 +44,6 @@
 
 //   hanleResPassage(List<PassageModel> passageModel) {
 //     String res = '';
-//     // p('passageModel trong hanleResPassage', passageModel); //[]
 //     for (PassageModel model in passageModel) {
 //       res += model.toString();
 //       res += '\n';
@@ -82,11 +80,12 @@
 //         listSentenceNoTime.add(words); //list con băt đầu từ 1
 //         listTime.add(listLrcWord.last[0]); //đặt trong vòng for (=số câu lyric)
 //       } else {
+//         listTime.add(sentence);
+//         listSentenceNoTime.add([]);
 //         if (i == listLrcText.length - 1) {
 //           //câu cuối
-//           listSentenceNoTime.add([]);
-//           listLrcWord.last = [sentence.trim()]; //lấy time
-//           listTime.add(listLrcWord.last[0]);
+//           // listLrcWord.last = [sentence.trim()]; //lấy time
+//           // listTime.add(listLrcWord.last[0]);
 //           onErr(i, "Câu cuối của file lrc empty");
 //         } else {
 //           onErr(i, 'lrc chứa câu empty');
@@ -111,7 +110,6 @@
 //       replaceLrcByOriginal();
 //       handleLrcResult();
 //       handlePassage();
-//       // checkResPassage();
 //     }
 //   }
 
@@ -121,7 +119,6 @@
 //       resStr += '\n';
 //     }
 //     resLrcCtrl.text = resStr;
-//     // checkLrcResult(resStr); //only show err if has null sentence
 //   }
 
 //   String err = '';
@@ -136,79 +133,74 @@
 //     String sub = '';
 //     listModel = [];
 //     bool isAddToResult;
+//     String pairWord;
+//     int findLast = -1;
+//     int demPunc;
+//     String punc;
+//     int end;
+//     List<String> sentence;
 //     String oriOfLrc = original.replaceAll('\n', ' ');
 //     for (int i = 0; i < listSentenceNoTime.length; ++i) {
-//       isAddToResult = true;
-//       List<String> sentence = listSentenceNoTime[i];
-//       if (sentence.isEmpty) {
-//         //câu cuối
-//         listModel.add(LyricModel(time: listTime[i], sentence: oriOfLrc));
-//         p('sub cau cuoi2', sub);
-//         p('ori cau cuoi2', oriOfLrc);
-//         break;
-//       }
-//       //sentence not empty
-//       String pairWord;
-//       if (sentence.length < 2) {
-//         pairWord = sentence.last;
-//       } else {
+//       isAddToResult = true; //nếu F thì reset về T
+//       sentence = listSentenceNoTime[i];
+//       if (sentence.length >= 2) {
 //         pairWord =
 //             '${sentence[sentence.length - 2]} ${sentence.last}'; //cặp từ cuối câu
-//       }
-//       var findLast = oriOfLrc.toLowerCase().indexOf(pairWord.toLowerCase());
-//       if (findLast > -1) {
-//         int end = findLast +
-//             pairWord.length; //+2 dấu phía sau nó (or space).VD: ..bye!"
-//         end = handleEndIndex(end, oriOfLrc);
-//         String substr = oriOfLrc.substring(0, end).trim(); //cp
-//         oriOfLrc = oriOfLrc.removeDoneString(end);
-//         int dem = countPunc(oriOfLrc);
-//         String punc = dem > 0 ? oriOfLrc.substring(0, dem) : '';
-//         p('punc', punc);
-//         //substring căt ko lấy end. VD: dem=1=> chỉ lấy 1 kí tự 0, chứ ko phải lấy ký tự 0 và 1
-//         sub = substr + punc;
-//         oriOfLrc = oriOfLrc.removeDoneString(dem); //remove punc
-//       } else {
-//         //not found pairWordLast
-//         int a = i + 1;
-//         if (a >= listSentenceNoTime.length) {
-//           listModel.add(LyricModel(
-//               time: listTime[listTime.length - 1], sentence: oriOfLrc));
-//           onErr(i, 'Câu cuối có cặp từ cuối ko trùng khớp');
-//           errExit = -1;
-//           break;
-//         }
-//         String pair;
-//         if (listSentenceNoTime[a].length > 1) {
-//           pair = '${listSentenceNoTime[a].first} ${listSentenceNoTime[a][1]}';
-//         } else {
-//           pair = listSentenceNoTime[a].first;
-//         }
-//         int end = oriOfLrc.toLowerCase().indexOf(pair.toLowerCase());
-//         if (end > -1) {
-//           end = handleEndIndex(end - 1, oriOfLrc);
-//           //lùi lại 1 dấu (nháy...) để nó ko lấy dấu mở của câu sau
-//           sub = oriOfLrc.substring(0, end).trim();
+//         findLast = oriOfLrc.toLowerCase().indexOf(pairWord.toLowerCase());
+//         if (findLast > -1) {
+//           end = findLast + pairWord.length;
+//           String substr = oriOfLrc.substring(0, end).trim(); //sub chưa lấy punc
 //           oriOfLrc = oriOfLrc.removeDoneString(end);
+//           demPunc = countPunc(oriOfLrc);
+//           punc = demPunc > 0 ? oriOfLrc.substring(0, demPunc) : '';
+//           //substring căt ko lấy end. VD: dem=1=> chỉ lấy 1 kí tự 0, chứ ko phải lấy ký tự 0 và 1
+//           sub = substr + punc;
+//           oriOfLrc = oriOfLrc.removeDoneString(demPunc); //remove punc
 //         } else {
-//           //giữ lại time, gán time này cho câu sau (bỏ time của câu sau)
-//           if (i < listTime.length - 1) {
-//             listTime[i + 1] = listTime[i]; //t
-//           } else {
-//             //listTime giữ nguyên => vẫn là time của câu sau (thay vì câu đầu)
+//           int a = i + 1;
+//           if (a >= listSentenceNoTime.length) {
+//             listModel.add(LyricModel(
+//                 time: listTime[listTime.length - 1], sentence: oriOfLrc)); //t
+//             onErr(i, 'Câu cuối có cặp từ cuối ko trùng khớp');
+//             errExit = -1;
+//             break;
 //           }
-//           isAddToResult = false;
-//           onWarning(i + 1); //not found pairWordFirst
+//           pairWord = listSentenceNoTime[a].first;
+//           if (listSentenceNoTime[a].length > 1) {
+//             pairWord += ' ${listSentenceNoTime[a][1]}';
+//           }
+//           int end = oriOfLrc.toLowerCase().indexOf(pairWord.toLowerCase());
+//           if (end > -1) {
+//             end = handleEndIndex(end - 1, oriOfLrc);
+//             //lùi lại 1 dấu (nháy...) để nó ko lấy dấu mở của câu sau
+//             sub = oriOfLrc.substring(0, end).trim();
+//             oriOfLrc = oriOfLrc.removeDoneString(end);
+//           } else {
+//             //giữ lại time, gán time này cho câu sau (bỏ time của câu sau),
+//             //not found pairWordFirst
+//             isAddToResult = setNextTime(a);
+//           }
 //         }
+//       } else {
+//         //sentence has only 1word
+//         //bỏ qua câu này (ko add vào res) để nhập vào câu sau, chỉ giữ time
+//         isAddToResult = setNextTime(i + 1);
 //       }
-//       //sentence empty vẫn add
+//       //phải check isAddToResult để tránh lặp câu (ko thỏa nó vẫn lấy sub cũ để add dô res)
 //       if (isAddToResult) {
-//         listModel.add(LyricModel(
-//             time: listTime[i],
-//             sentence:
-//                 sub)); //bị lặp câu vì ko có nào match nó vẫn add (lấy câu trc)
+//         listModel.add(LyricModel(time: listTime[i], sentence: sub));
 //       }
 //     }
+//   }
+
+//   bool setNextTime(int a) {
+//     if (a < listTime.length) {
+//       listTime[a] = listTime[a - 1]; //t
+//     } else {
+//       //câu cuối:listTime giữ nguyên (vẫn là time của câu sau (thay vì câu đầu))
+//     }
+//     onWarning(a); //not found pairWordFirst
+//     return false;
 //   }
 
 //   int countPunc(String ori) {
@@ -229,11 +221,11 @@
 //   onErr(int i, String text) {
 //     err += text;
 //     if (i > -1) {
-//       resLrcCtrl.listErr.add(ErrorModel(
-//           type: TypeErr.error,
-//           timeLine: listTime[i < listTime.length ? i : listTime.length - 1]));
+//       int a = i < listTime.length ? i : listTime.length - 1;
+//       resLrcCtrl.listErr
+//           .add(ErrorModel(type: TypeErr.error, timeLine: listTime[a]));
 //       //i=-1 là ko hiện index,chỉ hiện text
-//       err += ' (at ROW ${i + 1})';
+//       err += ' (at ${listTime[a]})';
 //     }
 //     err += '\n';
 //   }
