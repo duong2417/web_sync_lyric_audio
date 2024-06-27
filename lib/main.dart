@@ -91,6 +91,17 @@ class _MyHomePageState extends State<MyHomePage> {
                               controller: bloc.passageResCtrl,
                             ),
                           ),
+                          // SizedBox(
+                          //   height: 300, //cp
+                          //   // width: 300,
+                          //   child: TextFormField(
+                          //     minLines: 15,
+                          //     maxLines: null,
+                          //     decoration: const InputDecoration(
+                          //         label: Text('Result (Passage) 2')),
+                          //     controller: bloc.passageResCtrl2,
+                          //   ),
+                          // ),
                         ],
                       ),
                     ),
@@ -133,6 +144,14 @@ class _MyHomePageState extends State<MyHomePage> {
             },
             tooltip: 'Reset',
             child: const Icon(Icons.restore_from_trash),
+          ),
+          FloatingActionButton(
+            onPressed: () {
+              bloc.reHandlePassage();
+              setState(() {}); //rm err
+            },
+            tooltip: 'Reconvert passage',
+            child: const Icon(Icons.currency_exchange),
           ),
         ],
       ),
