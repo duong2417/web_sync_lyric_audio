@@ -43,8 +43,9 @@ class _MyHomePageState extends State<MyHomePage> {
                 // mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: <Widget>[
                   SizedBox(
-                    height: MediaQuery.sizeOf(context).height - 200,
+                    height: MediaQuery.sizeOf(context).height - 300,
                     width: MediaQuery.sizeOf(context).width / 3 - 30,
+                    // width: 200,
                     child: TextField(
                       minLines: 10,
                       maxLines: null,
@@ -56,6 +57,8 @@ class _MyHomePageState extends State<MyHomePage> {
                   SizedBox(
                     height: MediaQuery.sizeOf(context).height - 200,
                     width: MediaQuery.sizeOf(context).width / 3 - 30,
+                    // width: 300,
+                    // height: 500,
                     child: TextField(
                       minLines: 10,
                       maxLines: null,
@@ -81,7 +84,7 @@ class _MyHomePageState extends State<MyHomePage> {
                             ),
                           ),
                           SizedBox(
-                            height: 300, //cp
+                            height: 350,//300 //cp
                             // width: 300,
                             child: TextFormField(
                               minLines: 15,

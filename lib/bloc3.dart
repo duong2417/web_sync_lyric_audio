@@ -1,25 +1,22 @@
-import 'package:flutter/material.dart';
-import 'package:web_sync_lyrix/custom_textfield/custom_lrc_textfield.dart';
 import 'package:web_sync_lyrix/custom_textfield/custom_ori_textfield.dart';
 import 'package:web_sync_lyrix/custom_textfield/custom_textfield.dart';
 import 'package:web_sync_lyrix/model/err_model.dart';
 import 'package:web_sync_lyrix/extension.dart';
 import 'package:web_sync_lyrix/model/model.dart';
 import 'package:web_sync_lyrix/passage_model.dart';
+import 'package:web_sync_lyrix/print.dart';
 
 class Lyric {
   List<LyricModel> listModelOfLrcResult = []; //result
   List<LyricModel> listModelOfLrc = []; //result
-  final textLrcCtrl = CustomLrcTextField();
   final textOriginalCtrl = CustomOriTextField();
+  final textLrcCtrl = CustomTextEditCtrl(); //CustomLrcTextField();
   final resLrcCtrl = CustomTextEditCtrl();
-  final passageResCtrl = TextEditingController();
-  // final passageResCtrl2 = TextEditingController();
+  final passageResCtrl = CustomTextEditCtrl(); //TextEditingController();
   List<String> listLrcText = [], listTime = []; //each row//listOriginalText,
   List<List<String>> listLrcWord = [], listSentenceNoTime = [];
   List<OnePassage> passage = [];
   List<PassageModel> passageModelResult = []; //result
-  // List<PassageModel> passageModelResult2 = []; //result
   reHandlePassage() {
     passageModelResult = [];
     List<String> listLine = resLrcCtrl.text.split('\n');
@@ -33,7 +30,6 @@ class Lyric {
       models.add(LyricModel(time: time, sentence: text));
     }
     handlePassage(models);
-    // reconvertResPassage2(models);
   }
 
   List<String> listPassage = [];
@@ -47,33 +43,65 @@ class Lyric {
     if (listPassage.length < 2) {
       //passage
       passageModelResult.add(PassageModel(
-          time: '[00:00:00]', passage: listPassage[0])); // index: 1
+          time: listResult[0].time, passage: listPassage[0])); // index: 1
       onPassageErr(s: 'Only 1 passage!');
     } else {
-      List<LyricModel> clone = List.from(listResult);
-      String lrcSentence;
+      List<LyricModel> clone = List.from(listResult); //to remove done element
+      String lrcSentence, firstWordsOfPassage;
+      // PassageModel? modelResult;
       for (int i = 0; i < listPassage.length; ++i) {
-        //passage
+        bool isFound = false; //ktao&reset
         for (int j = 0; j < clone.length; ++j) {
           lrcSentence = clone[j].sentence.trim();
-          if (listPassage[i].contains(lrcSentence)) {
+          if (lrcSentence.isEmpty) {
+            return;
+          }
+          if (listPassage[i].length > 100) {
+            firstWordsOfPassage =
+                listPassage[i].substring(0, 100); //100 ky tu dau
+          } else {
+            firstWordsOfPassage = listPassage[i];
+          }
+          // if (listPassage[i].contains(lrcSentence)) {
+          if (firstWordsOfPassage.contains(lrcSentence) ||
+              (lrcSentence.indexOf(firstWordsOfPassage) == 0)) {
+            //lrcSentence it nhat 2 word: lrcResult đã handle
             passageModelResult.add(
                 PassageModel(time: clone[j].time, passage: listPassage[i]));
             //lrc remove done part: từ 0->vị trí listTime đó
             clone.removeRange(0, j);
+            isFound = true;
             break;
           } else {}
         }
+        if (isFound == false) {
+          passageModelResult
+              .add(PassageModel(time: timeErr, passage: listPassage[i]));
+        }
       }
-      passageResCtrl.text = hanleResPassage(passageModelResult);
-      // handleResPassage2(passageModelResult2);
+      passageResCtrl.text = handlePassageRes(passageModelResult);
     }
   }
 
-  String hanleResPassage(List<PassageModel> passageModelResult) {
+  String handlePassageRes(List<PassageModel> passageModelResult) {
     String res = '';
-    for (PassageModel model in passageModelResult) {
-      res += model.toString();
+    List<String> sameTime = [];
+    for (int i = 0; i < passageModelResult.length; ++i) {
+      res += passageModelResult[i].toString();
+      // if (passageModelResult[i].time == '[00:00:**]') {
+      //   onPassageErr(timeLine: passageModelResult[i].time);
+      // }
+      //check cau trung
+      if (i >= 1) {
+        if (passageModelResult[i].time == passageModelResult[i - 1].time &&
+            !sameTime.contains(passageModelResult[i].time)) {
+          onPassageErr(timeLine: passageModelResult[i].time);
+          sameTime.add(passageModelResult[i].time);
+        }
+      }
+    }
+    if (res.contains(timeErr) && !sameTime.contains(timeErr)) {
+      onPassageErr(timeLine: timeErr);
     }
     return res;
   }
@@ -82,7 +110,7 @@ class Lyric {
   splitLrcText() {
     listLrcText = textLrcCtrl.text.split(
         '\n') //lrc phải xóa hêt dấu, chỉ còn chữ thì câu trong passage dễ contain hơn (nhiều khi máy tự thêm dấu sai)
-      ..removeWhere((element) => element.isEmpty)
+      ..removeWhere((element) => element.isEmpty || element == ' ')
       ..forEach((element) {
         element = element.trim();
       });
@@ -155,6 +183,7 @@ class Lyric {
     oriOfLrc = original.replaceAll(RegExp(r'\n+'),
         '\n'); //nếu '' thì từ đầu cuối đoạn trc và đầu đoạn sau hợp lại thành 1 từ
     // textOriginalCtrl.text = oriOfLrc;//có lệch xíu cx ko sao (vì index lấy từ oriOfLrc (ko có \n))
+    // p('oriOfLrc', oriOfLrc);
     int flag = 0;
     bool isMatch; //true khi notEmpty&match
     for (int i = 0; i < listModelOfLrc.length; ++i) {
@@ -167,7 +196,10 @@ class Lyric {
         //trim().isNotEmpty
         //thought Alice => nên tach riêng ra nên min=2 là đẹp
         String cau = model.sentence.toLowerCase();
-        end = oriOfLrc.toLowerCase().indexOf(cau); //replaceAll(dauNgatCau, '').
+        end = oriOfLrc
+            .replaceAll(puncReplaceBySpace, ' ')
+            .toLowerCase()
+            .indexOf(cau);
         // p('end', end);
         if (end > -1) {
           isMatch = true; //reset
@@ -252,24 +284,25 @@ class Lyric {
     //đếm số dấu ngay sau word
     int dem = 0;
     for (int i = 0; i < ori.length; ++i) {
+      // if (ori[i] == ' ' || ori[i] == '\n') {
+      //   break;
+      // } else if (ori[i].contains(closePunc)) {
+      //   ++dem;
+      //   break;
+      // }
+      // p('ori trong countPunc', ori);
       if (ori[i] == ' ' || ori[i] == '\n') {
+        //charactor.hasMatch(ori[i]) ||
+        break;
+      } else if (closePunc.hasMatch(ori[i])) {
+        //..now-but I..
+        ++dem;
         break;
       }
       ++dem;
     }
+    // p('dem', dem);
     return dem;
-  }
-
-  onErr(int i, String text) {
-    err += text;
-    if (i > -1 && i < listModelOfLrcResult.length) {
-      String timeLine = listModelOfLrcResult[i].time;
-      resLrcCtrl.listErr
-          .add(ErrorModel(type: TypeErr.error, timeLine: timeLine));
-      //i=-1 là ko hiện index,chỉ hiện text
-      err += ' (at $timeLine)';
-    }
-    err += '\n';
   }
 
   onHighlightOri(SentenceHighlight model) {
@@ -288,18 +321,34 @@ class Lyric {
     err = '';
     passage = [];
     passageModelResult = [];
-    // passageModelResult2 = [];
     resLrcCtrl.clear();
     resLrcCtrl.listErr = [];
     textLrcCtrl.listErr = [];
     textOriginalCtrl.listIndex = [];
   }
 
-  void onPassageErr({int i = -1, int indexOfPassage = -1, String? s}) {
+  onErr(int i, String text) {
+    err += text;
+    if (i > -1 && i < listModelOfLrcResult.length) {
+      String timeLine = listModelOfLrcResult[i].time;
+      resLrcCtrl.listErr
+          .add(ErrorModel(type: TypeErr.error, timeLine: timeLine));
+      //i=-1 là ko hiện index,chỉ hiện text
+      err += ' (at $timeLine)';
+    }
+    err += '\n';
+  }
+
+  void onPassageErr(
+      {int i = -1, int indexOfPassage = -1, String? s, String? timeLine}) {
     if (s != null) {
       err += s;
     }
-    err += ' At PASSAGE $indexOfPassage:';
+    // err += ' At PASSAGE $indexOfPassage:';
+    if (timeLine != null) {
+      passageResCtrl.listErr
+          .add(ErrorModel(type: TypeErr.error, timeLine: timeLine));
+    }
     if (i > -1) {
       err += 'Passage bị thiếu:\n$i\n${passage[i].passage}';
     }
@@ -316,31 +365,3 @@ class Lyric {
     }
   }
 }
-  // reconvertResPassage2(List<LyricModel> lrcResult) {
-  //   String res = '${lrcResult[0].time} ${listPassage[0]}}\n\n';
-  //   List<String> times = [];
-  //   for (int i = 0; i < lrcResult.length; ++i) {
-  //     //empty err
-  //     // result[i].passage = listPassage[i];
-  //     if (lrcResult[i].sentence.contains('\n')) {
-  //       times.add(lrcResult[i].time);
-  //     }
-  //   }
-  //   for (int i = 0; i < times.length; ++i) {
-  //     res += '${times[i]} ${listPassage[i + 1]}\n\n';
-  //   }
-  //   passageResCtrl2.text = res;
-  // }
-
-    // handleResPassage2(List<PassageModel> resultOnlyTime) {
-  //   resultOnlyTime.insert(
-  //       0,
-  //       PassageModel(
-  //           time: listModelOfLrcResult[0].time, passage: listPassage[0]));
-  //   String res = resultOnlyTime[0].toString();
-  //   for (int i = 1; i < resultOnlyTime.length; ++i) {
-  //     resultOnlyTime[i].passage = listPassage[i];
-  //     res += resultOnlyTime[i].toString();
-  //   }
-  //   passageResCtrl2.text = res;
-  // }

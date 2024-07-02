@@ -11,24 +11,34 @@ class CustomTextEditCtrl extends TextEditingController {
     List<StartOfErr> starts = [];
     List<TextSpan> spans = []; //cp at here to edit text (reset mỗi lần gọi)
     if (listErr.isNotEmpty) {
+      //TODO: remove trung
       for (int i = 0; i < listErr.length; ++i) {
-        int s = text.indexOf(listErr[i].timeLine);
-        if (s > -1) {
-          final e = StartOfErr(
-              color: listErr[i].type == TypeErr.warn ? Colors.blue : Colors.red,
-              index: s);
-          if (starts.isEmpty) {
-            starts.add(e);
-          } else {
-            if (s < starts.first.index) {
-              //add vao dau ds
-              starts.insert(0, e);
-            } else if (s > starts.last.index) {
-              starts.add(e);
-            }
-            //bang thi ko add
+        List<int> listIndex = getAllIndices(text, listErr[i].timeLine);
+        // int s = textClone.indexOf(listErr[i].timeLine);
+        // if (s > -1) {
+        // textClone = textClone.substring(
+        //     s); //avoid timeLine trùng nhau thì nó vẫn lấy index của time đầu tiên//mà index = nhau cx ko sao vì = nhau thì ko add vào list (chỉ add cái đầu)
+        // s += oldIndex;
+        // oldIndex = s;
+        // final e = StartOfErr(
+        //     color: listErr[i].type == TypeErr.warn ? Colors.blue : Colors.red,
+        //     index: s);
+        final Color color =
+            listErr[i].type == TypeErr.warn ? Colors.blue : Colors.red;
+        List<StartOfErr> listModel =
+            listIndex.map((e) => StartOfErr(color: color, index: e)).toList();
+        if (starts.isEmpty) {
+          starts.addAll(listModel);
+        } else {
+          if (listIndex.last < starts.first.index) {
+            //add vao dau ds
+            starts.insertAll(0, listModel);
+          } else if (listIndex.first > starts.last.index) {
+            starts.addAll(listModel);
           }
+          //bang thi ko add
         }
+        // }
       }
       int start = 0;
       for (int i = 0; i < starts.length; ++i) {
@@ -59,4 +69,14 @@ class CustomTextEditCtrl extends TextEditingController {
     return super.buildTextSpan(
         style: style, withComposing: withComposing, context: context);
   }
+}
+
+List<int> getAllIndices(String str, String char) {
+  List<int> indices = [];
+  int index = str.indexOf(char);
+  while (index != -1) {
+    indices.add(index);
+    index = str.indexOf(char, index + 1);
+  }
+  return indices;
 }
