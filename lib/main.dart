@@ -40,7 +40,6 @@ class _MyHomePageState extends State<MyHomePage> {
               ),
               Row(
                 mainAxisSize: MainAxisSize.min,
-                // mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: <Widget>[
                   SizedBox(
                     height: MediaQuery.sizeOf(context).height - 300,
@@ -57,8 +56,6 @@ class _MyHomePageState extends State<MyHomePage> {
                   SizedBox(
                     height: MediaQuery.sizeOf(context).height - 200,
                     width: MediaQuery.sizeOf(context).width / 3 - 30,
-                    // width: 300,
-                    // height: 500,
                     child: TextField(
                       minLines: 10,
                       maxLines: null,
@@ -84,27 +81,15 @@ class _MyHomePageState extends State<MyHomePage> {
                             ),
                           ),
                           SizedBox(
-                            height: 350,//300 //cp
-                            // width: 300,
-                            child: TextFormField(
+                            height: 350,
+                            child: TextField(
                               minLines: 15,
                               maxLines: null,
                               decoration: const InputDecoration(
                                   label: Text('Result (Passage)')),
-                              controller: bloc.passageResCtrl,
+                              controller: bloc.resPassageCtrl,
                             ),
                           ),
-                          // SizedBox(
-                          //   height: 300, //cp
-                          //   // width: 300,
-                          //   child: TextFormField(
-                          //     minLines: 15,
-                          //     maxLines: null,
-                          //     decoration: const InputDecoration(
-                          //         label: Text('Result (Passage) 2')),
-                          //     controller: bloc.passageResCtrl2,
-                          //   ),
-                          // ),
                         ],
                       ),
                     ),
@@ -132,7 +117,7 @@ class _MyHomePageState extends State<MyHomePage> {
           ),
           FloatingActionButton(
             onPressed: () {
-              Clipboard.setData(ClipboardData(text: bloc.passageResCtrl.text));
+              Clipboard.setData(ClipboardData(text: bloc.resPassageCtrl.text));
             },
             tooltip: 'Copy passage',
             child: const Icon(Icons.copy),
@@ -140,7 +125,7 @@ class _MyHomePageState extends State<MyHomePage> {
           FloatingActionButton(
             onPressed: () {
               bloc.reset();
-              bloc.passageResCtrl.clear();
+              bloc.resPassageCtrl.clear();
               bloc.textLrcCtrl.clear();
               bloc.textOriginalCtrl.clear();
               setState(() {}); //rm err
@@ -155,6 +140,13 @@ class _MyHomePageState extends State<MyHomePage> {
             },
             tooltip: 'Reconvert passage',
             child: const Icon(Icons.currency_exchange),
+          ),
+          FloatingActionButton(
+            onPressed: () {
+              bloc.removeBreaklineOfPassage();
+            },
+            tooltip: "Remove passage's breakline",
+            child: const Icon(Icons.arrow_circle_down_sharp),
           ),
         ],
       ),

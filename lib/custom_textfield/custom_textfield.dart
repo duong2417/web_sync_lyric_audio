@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:web_sync_lyrix/model/err_model.dart';
+import 'package:web_sync_lyrix/print.dart';
 
 class CustomTextEditCtrl extends TextEditingController {
   List<ErrorModel> listErr = [];
@@ -8,52 +9,44 @@ class CustomTextEditCtrl extends TextEditingController {
       {required BuildContext context,
       TextStyle? style,
       required bool withComposing}) {
-    List<StartOfErr> starts = [];
+    List<StartOfErr> modelTimeIndexes = [];
     List<TextSpan> spans = []; //cp at here to edit text (reset mỗi lần gọi)
     if (listErr.isNotEmpty) {
-      //TODO: remove trung
       for (int i = 0; i < listErr.length; ++i) {
-        List<int> listIndex = getAllIndices(text, listErr[i].timeLine);
-        // int s = textClone.indexOf(listErr[i].timeLine);
-        // if (s > -1) {
-        // textClone = textClone.substring(
-        //     s); //avoid timeLine trùng nhau thì nó vẫn lấy index của time đầu tiên//mà index = nhau cx ko sao vì = nhau thì ko add vào list (chỉ add cái đầu)
-        // s += oldIndex;
-        // oldIndex = s;
-        // final e = StartOfErr(
-        //     color: listErr[i].type == TypeErr.warn ? Colors.blue : Colors.red,
-        //     index: s);
+        List<int> timeIndexes = getAllIndices(text, listErr[i].timeLine);
+        if (timeIndexes.isNotEmpty){
         final Color color =
             listErr[i].type == TypeErr.warn ? Colors.blue : Colors.red;
         List<StartOfErr> listModel =
-            listIndex.map((e) => StartOfErr(color: color, index: e)).toList();
-        if (starts.isEmpty) {
-          starts.addAll(listModel);
+            timeIndexes.map((e) => StartOfErr(color: color, index: e)).toList();
+        if (modelTimeIndexes.isEmpty) {
+          modelTimeIndexes.addAll(listModel);
         } else {
-          if (listIndex.last < starts.first.index) {
+          //modelTimeIndexes hasData
+          p('timeIndexes.last',timeIndexes.last);
+          if (timeIndexes.last < modelTimeIndexes.first.index) {//Bad state: No element
             //add vao dau ds
-            starts.insertAll(0, listModel);
-          } else if (listIndex.first > starts.last.index) {
-            starts.addAll(listModel);
+            modelTimeIndexes.insertAll(0, listModel);
+          } else if (timeIndexes.first > modelTimeIndexes.last.index) {
+            modelTimeIndexes.addAll(listModel);
           }
           //bang thi ko add
         }
-        // }
+        }
       }
       int start = 0;
-      for (int i = 0; i < starts.length; ++i) {
-        int end = starts[i].index + 11;
-        if (end < text.length && starts[i].index > start) {
+      for (int i = 0; i < modelTimeIndexes.length; ++i) {
+        int end = modelTimeIndexes[i].index + 11;
+        if (end < text.length && modelTimeIndexes[i].index > start) {
           spans.add(TextSpan(
-            text: text.substring(start,
-                starts[i].index), //start->đầu err//Only valid value is 0: -1
+            text: text.substring(start, modelTimeIndexes[i].index), //start->đầu err
             style: style,
           ));
           //errTimeLine
           spans.add(TextSpan(
-            text: text.substring(starts[i].index, end),
+            text: text.substring(modelTimeIndexes[i].index, end),
             style: style?.copyWith(
-                color: starts[i].color, fontWeight: FontWeight.bold),
+                color: modelTimeIndexes[i].color, fontWeight: FontWeight.bold),
           ));
           start = end;
         }
@@ -70,13 +63,15 @@ class CustomTextEditCtrl extends TextEditingController {
         style: style, withComposing: withComposing, context: context);
   }
 }
-
-List<int> getAllIndices(String str, String char) {
+//lấy all index của timeLine
+List<int> getAllIndices(String str, String timeLine) {
   List<int> indices = [];
-  int index = str.indexOf(char);
-  while (index != -1) {
+  int index = str.indexOf(timeLine);
+  while (index != -1 && index < str.length - 1) {
+    // if (index < str.length - 1) {
     indices.add(index);
-    index = str.indexOf(char, index + 1);
+    index = str.indexOf(timeLine, index + 1); //0..10685: 10686
+    // }
   }
   return indices;
 }
